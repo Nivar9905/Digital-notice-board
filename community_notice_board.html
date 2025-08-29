@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Notice Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.1; }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .admin-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .admin-toggle {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .admin-toggle:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .admin-form {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .admin-form.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: white;
+            color: #2c3e50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .post {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .post.urgent {
+            border-left-color: #e74c3c;
+            background: linear-gradient(to right, #fff5f5, white);
+        }
+
+        .post.event {
+            border-left-color: #f39c12;
+            background: linear-gradient(to right, #fffbf0, white);
+        }
+
+        .post.marketplace {
+            border-left-color: #27ae60;
+            background: linear-gradient(to right, #f8fff8, white);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .post-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .post-meta {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .post-content {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .post-tags {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            color: #495057;
+        }
+
+        .priority-high {
+            background: #fee;
+            color: #e74c3c;
+        }
+
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .contact-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .contact-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .contact-info {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .contacts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏘️ Community Notice Board</h1>
+            <p>Stay connected with your neighborhood</p>
+        </div>
+
+        <div class="admin-controls">
+            <button class="admin-toggle" onclick="toggleAdminPanel()">
+                📝 Admin Panel
+            </button>
+            
+            <div class="admin-form" id="adminForm">
+                <h3>Add New Post</h3>
+                <form id="postForm">
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" required>
+                            <option value="announcements">📢 Announcements</option>
+                            <option value="events">🎉 Events</option>
+                            <option value="marketplace">🛍️ Marketplace</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="content">Content</label>
+                        <textarea id="content" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact">Contact Info (optional)</label>
+                        <input type="text" id="contact" placeholder="Phone, email, or name">
+                    </div>
+                    
+                    <button type="submit" class="btn">Post Message</button>
+                    <button type="button" class="btn btn-danger" onclick="toggleAdminPanel()">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('announcements')">📢 Announcements</button>
+                <button class="tab" onclick="showTab('events')">🎉 Events</button>
+                <button class="tab" onclick="showTab('marketplace')">🛍️ Marketplace</button>
+                <button class="tab" onclick="showTab('contacts')">📞 Contacts</button>
+            </div>
+
+            <div class="tab-content active" id="announcements">
+                <div id="announcements-content"></div>
+            </div>
+
+            <div class="tab-content" id="events">
+                <div id="events-content"></div>
+            </div>
+
+            <div class="tab-content" id="marketplace">
+                <div id="marketplace-content"></div>
+            </div>
+
+            <div class="tab-content" id="contacts">
+                <div class="contacts-grid">
+                    <div class="contact-card">
+                        <div class="contact-title">🏢 Society Office</div>
+                        <div class="contact-info">
+                            Phone: +91 98765 43210<br>
+                            Email: office@society.com<br>
+                            Hours: 9 AM - 6 PM
+                        </div>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <div class="contact-title">🚨 Emergency Services</div>
+                        <div class="contact-info">
+                            Police: 100<br>
+                            Fire: 101<br>
+                            Ambulance: 108
+                        </div>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <div class="contact-title">🔧 Maintenance</div>
+                        <div class="contact-info">
+                            Plumber: +91 98765 11111<br>
+                            Electrician: +91 98765 22222<br>
+                            Carpenter: +91 98765 33333
+                        </div>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <div class="contact-title">🚛 Utilities</div>
+                        <div class="contact-info">
+                            Water Supply: +91 98765 44444<br>
+                            Electricity: +91 98765 55555<br>
+                            Gas: +91 98765 66666
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let posts = {
+            announcements: [
+                {
+                    id: 1,
+                    title: "Monthly Maintenance Due",
+                    content: "Dear residents, monthly maintenance of ₹2,500 is due by 5th of this month. Please make payments to avoid late fees.",
+                    priority: "urgent",
+                    contact: "Accounts: +91 98765 43210",
+                    date: new Date().toLocaleDateString()
+                },
+                {
+                    id: 2,
+                    title: "Water Supply Maintenance",
+                    content: "Water supply will be interrupted tomorrow from 10 AM to 2 PM for tank cleaning. Please store water accordingly.",
+                    priority: "normal",
+                    contact: "Maintenance Team",
+                    date: new Date().toLocaleDateString()
+                }
+            ],
+            events: [
+                {
+                    id: 3,
+                    title: "Diwali Celebration",
+                    content: "Community Diwali celebration on 12th November at 6 PM in the community hall. Join us for festivities, food, and fun!",
+                    priority: "normal",
+                    contact: "Cultural Committee",
+                    date: new Date().toLocaleDateString()
+                }
+            ],
+            marketplace: [
+                {
+                    id: 4,
+                    title: "Washing Machine for Sale",
+                    content: "Semi-automatic washing machine, 2 years old, excellent condition. Selling due to relocation. Price: ₹8,000 (negotiable)",
+                    priority: "normal",
+                    contact: "Flat 304, +91 98765 12345",
+                    date: new Date().toLocaleDateString()
+                }
+            ]
+        };
+
+        let nextId = 5;
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Render posts for the selected tab
+            if (tabName !== 'contacts') {
+                renderPosts(tabName);
+            }
+        }
+
+        function toggleAdminPanel() {
+            const adminForm = document.getElementById('adminForm');
+            adminForm.classList.toggle('active');
+        }
+
+        function renderPosts(category) {
+            const container = document.getElementById(category + '-content');
+            const categoryPosts = posts[category] || [];
+            
+            if (categoryPosts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 4em; margin-bottom: 20px;">📋</div>
+                        <h3>No posts yet</h3>
+                        <p>Be the first to post something in this category!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = categoryPosts.map(post => `
+                <div class="post ${post.priority === 'urgent' ? 'urgent' : ''} ${category === 'events' ? 'event' : ''} ${category === 'marketplace' ? 'marketplace' : ''}">
+                    <div class="post-header">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-meta">
+                            ${post.date}
+                            <button class="delete-btn" onclick="deletePost(${post.id}, '${category}')">×</button>
+                        </div>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    ${post.contact ? `<div class="post-tags">
+                        <span class="tag">Contact: ${post.contact}</span>
+                    </div>` : ''}
+                    ${post.priority === 'urgent' ? `<div class="post-tags">
+                        <span class="tag priority-high">🚨 URGENT</span>
+                    </div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function deletePost(postId, category) {
+            if (confirm('Are you sure you want to delete this post?')) {
+                posts[category] = posts[category].filter(post => post.id !== postId);
+                renderPosts(category);
+            }
+        }
+
+        document.getElementById('postForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const priority = document.getElementById('priority').value;
+            const contact = document.getElementById('contact').value;
+            
+            const newPost = {
+                id: nextId++,
+                title: title,
+                content: content,
+                priority: priority,
+                contact: contact,
+                date: new Date().toLocaleDateString()
+            };
+            
+            if (!posts[category]) {
+                posts[category] = [];
+            }
+            
+            posts[category].unshift(newPost);
+            
+            // Reset form
+            document.getElementById('postForm').reset();
+            toggleAdminPanel();
+            
+            // Show the category tab and render posts
+            showTab(category);
+            
+            // Update the active tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[onclick="showTab('${category}')"]`).classList.add('active');
+            
+            renderPosts(category);
+        });
+
+        // Initialize the page
+        renderPosts('announcements');
+    </script>
+</body>
+</html>
